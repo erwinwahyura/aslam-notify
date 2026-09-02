@@ -1,5 +1,8 @@
-const CACHE = 'lambung-sehat-v3';
-const ASSETS = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png'];
+const CACHE = 'lambung-sehat-v4';
+// Cloudflare Pages 308-redirects /index.html -> /, and caching a redirected
+// Response makes Safari refuse to render it later, so only cache the clean
+// root URL (not './index.html') as the HTML entry.
+const ASSETS = ['./', './manifest.json', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS)));
@@ -15,26 +18,26 @@ self.addEventListener('activate', (e) => {
   self.clients.claim();
 });
 
+// Safari refuses to render a service-worker response for a navigation if it
+// went through a redirect (response.redirected), so strip that by rebuilding
+// a clean Response — needed for both cached entries and live fetches.
+function stripRedirect(response) {
+  if (!response.redirected) return response;
+  return response.blob().then(
+    (body) =>
+      new Response(body, {
+        status: response.status,
+        statusText: response.statusText,
+        headers: response.headers
+      })
+  );
+}
+
 self.addEventListener('fetch', (e) => {
   e.respondWith(
     caches.match(e.request).then((cached) => {
-      if (cached) return cached;
-      return fetch(e.request).then((response) => {
-        // Safari refuses to render a service-worker response for a
-        // navigation if it went through a redirect (response.redirected),
-        // so rebuild a clean, non-redirected Response before returning it.
-        if (response.redirected) {
-          return response.blob().then(
-            (body) =>
-              new Response(body, {
-                status: response.status,
-                statusText: response.statusText,
-                headers: response.headers
-              })
-          );
-        }
-        return response;
-      });
+      if (cached) return stripRedirect(cached);
+      return fetch(e.request).then(stripRedirect);
     })
   );
 });

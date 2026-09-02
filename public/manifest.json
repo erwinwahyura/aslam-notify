@@ -2,7 +2,7 @@
   "name": "Reminder Lambung Sehat",
   "short_name": "Lambung Sehat",
   "description": "Reminder jadwal makan, minum air, dan obat lambung",
-  "start_url": "./index.html",
+  "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
