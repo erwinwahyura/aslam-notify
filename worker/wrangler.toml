@@ -1,0 +1,19 @@
+name = "aslam-notify-push"
+main = "src/index.js"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+
+[triggers]
+crons = ["* * * * *"]
+
+[[kv_namespaces]]
+binding = "STORE"
+id = "b02f6d3b148249358a7e5242c8632ffd"
+
+[vars]
+VAPID_SUBJECT = "mailto:erwinwahyura@gmail.com"
+VAPID_SERVER_PUBLIC_KEY = "BMwPCFpib_gbxIHhcnh_3BITS4NLxPrDvQ1lPci1n31CMIkLUCniAfJMZLRpNL5QpwKbkV69qluHWdCVSRl_tfk"
+
+# Secrets (set via `wrangler secret put`, not stored here):
+#   VAPID_SERVER_PRIVATE_KEY
+#   APP_TOKEN

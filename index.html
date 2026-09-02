@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Reminder Lambung Sehat</title>
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#5C8A6B">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Lambung Sehat">
+<link rel="apple-touch-icon" href="./icon-180.png">
+<link rel="icon" href="./icon-192.png">
+<style>
+  :root{
+    --bg:#FAF7F1;
+    --card:#FFFFFF;
+    --ink:#33362E;
+    --sub:#8A8C80;
+    --sage:#5C8A6B;
+    --sage-light:#E7F0E5;
+    --water:#5C89B0;
+    --water-light:#E5EEF5;
+    --meds:#B5665C;
+    --meds-light:#F5E8E6;
+    --rest:#8A759E;
+    --rest-light:#EFE8F3;
+    --border:#EDE9E1;
+    --shadow: 0 1px 3px rgba(50,45,30,0.06), 0 1px 2px rgba(50,45,30,0.04);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    background:var(--bg);
+    color:var(--ink);
+    padding:16px;
+    max-width:480px;
+    margin:0 auto;
+    padding-bottom:60px;
+  }
+  header{
+    text-align:center;
+    padding:12px 0 20px;
+  }
+  header h1{
+    font-size:20px;
+    margin:0 0 4px;
+    font-weight:700;
+  }
+  header p{
+    font-size:13px;
+    color:var(--sub);
+    margin:0;
+  }
+  .tabs{
+    display:flex;
+    background:var(--card);
+    border-radius:14px;
+    padding:4px;
+    margin-bottom:18px;
+    box-shadow:var(--shadow);
+  }
+  .tab{
+    flex:1;
+    text-align:center;
+    padding:10px;
+    border-radius:10px;
+    font-size:14px;
+    font-weight:600;
+    color:var(--sub);
+    cursor:pointer;
+    transition:all .15s;
+    user-select:none;
+  }
+  .tab.active{
+    background:var(--sage);
+    color:#fff;
+  }
+  .view{display:none;}
+  .view.active{display:block;}
+  .card{
+    background:var(--card);
+    border-radius:16px;
+    padding:16px;
+    margin-bottom:12px;
+    box-shadow:var(--shadow);
+    border:1px solid var(--border);
+  }
+  .empty{
+    text-align:center;
+    color:var(--sub);
+    font-size:13px;
+    padding:30px 10px;
+  }
+  .reminder-item{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:12px;
+    border-radius:12px;
+    margin-bottom:8px;
+    border:1px solid var(--border);
+  }
+  .reminder-item.done{
+    opacity:0.5;
+  }
+  .r-icon{
+    width:38px;height:38px;
+    border-radius:10px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:18px;
+    flex-shrink:0;
+  }
+  .r-meal .r-icon{background:var(--sage-light);}
+  .r-water .r-icon{background:var(--water-light);}
+  .r-meds .r-icon{background:var(--meds-light);}
+  .r-rest .r-icon{background:var(--rest-light);}
+  .r-body{flex:1;min-width:0;}
+  .r-time{
+    font-size:15px;
+    font-weight:700;
+  }
+  .r-label{
+    font-size:13px;
+    color:var(--sub);
+    margin-top:1px;
+  }
+  .r-check{
+    width:24px;height:24px;
+    border-radius:50%;
+    border:2px solid var(--border);
+    flex-shrink:0;
+    cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    font-size:14px;
+    color:#fff;
+    transition:all .15s;
+  }
+  .r-check.checked{
+    background:var(--sage);
+    border-color:var(--sage);
+  }
+  .section-title{
+    font-size:13px;
+    font-weight:700;
+    color:var(--sub);
+    text-transform:uppercase;
+    letter-spacing:.03em;
+    margin:20px 0 8px 4px;
+  }
+  .section-title:first-child{margin-top:0;}
+  .cat-header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:12px;
+  }
+  .cat-title{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-size:15px;
+    font-weight:700;
+  }
+  .switch{
+    position:relative;
+    width:42px;height:24px;
+    flex-shrink:0;
+  }
+  .switch input{opacity:0;width:0;height:0;}
+  .slider{
+    position:absolute;top:0;left:0;right:0;bottom:0;
+    background:#DDD8CC;
+    border-radius:24px;
+    cursor:pointer;
+    transition:.2s;
+  }
+  .slider:before{
+    content:"";
+    position:absolute;
+    width:18px;height:18px;
+    left:3px;top:3px;
+    background:#fff;
+    border-radius:50%;
+    transition:.2s;
+  }
+  input:checked + .slider{background:var(--sage);}
+  input:checked + .slider:before{transform:translateX(18px);}
+  .time-row{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    margin-bottom:8px;
+  }
+  .time-row input[type=time]{
+    flex:1;
+    padding:9px 10px;
+    border-radius:10px;
+    border:1px solid var(--border);
+    font-size:14px;
+    background:var(--bg);
+    color:var(--ink);
+  }
+  .del-btn{
+    width:32px;height:32px;
+    border-radius:8px;
+    border:none;
+    background:#F5EDEA;
+    color:var(--meds);
+    font-size:16px;
+    cursor:pointer;
+    flex-shrink:0;
+  }
+  .add-btn{
+    width:100%;
+    padding:10px;
+    border-radius:10px;
+    border:1.5px dashed var(--border);
+    background:transparent;
+    color:var(--sage);
+    font-size:13px;
+    font-weight:600;
+    cursor:pointer;
+    margin-top:4px;
+  }
+  .interval-row{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-size:13px;
+    color:var(--sub);
+    margin-bottom:10px;
+  }
+  .interval-row select, .interval-row input{
+    padding:7px 8px;
+    border-radius:8px;
+    border:1px solid var(--border);
+    font-size:13px;
+    background:var(--bg);
+    color:var(--ink);
+  }
+  .tip{
+    font-size:12px;
+    color:var(--sub);
+    line-height:1.5;
+    background:var(--rest-light);
+    padding:10px 12px;
+    border-radius:10px;
+    margin-top:2px;
+  }
+  .notif-bar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    font-size:12.5px;
+    color:var(--sub);
+    padding:10px 4px 4px;
+  }
+  .notif-bar button{
+    background:var(--sage);
+    color:#fff;
+    border:none;
+    padding:7px 12px;
+    border-radius:8px;
+    font-size:12px;
+    font-weight:600;
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  .progress-text{
+    text-align:center;
+    font-size:13px;
+    color:var(--sub);
+    margin-bottom:14px;
+  }
+  .disclaimer{
+    font-size:11px;
+    color:var(--sub);
+    text-align:center;
+    margin-top:24px;
+    line-height:1.5;
+    padding:0 10px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🌿 Reminder Lambung Sehat</h1>
+  <p>Bantu jaga jadwal makan, minum, & obat</p>
+</header>
+
+<div class="tabs">
+  <div class="tab active" data-tab="today">Hari Ini</div>
+  <div class="tab" data-tab="settings">Atur Waktu</div>
+</div>
+
+<div id="notifBar" class="notif-bar" style="display:none;">
+  <span>🔔 Nyalakan notifikasi biar tetap dapet reminder walau app ketutup</span>
+  <button id="notifBtn">Nyalakan</button>
+</div>
+
+<div id="today" class="view active">
+  <div class="progress-text" id="progressText"></div>
+  <div id="scheduleList"></div>
+</div>
+
+<div id="settings" class="view">
+
+  <div class="card">
+    <div class="cat-header">
+      <div class="cat-title">🍽️ Jadwal Makan</div>
+      <label class="switch"><input type="checkbox" id="toggle-meal"><span class="slider"></span></label>
+    </div>
+    <div id="meal-times"></div>
+    <button class="add-btn" data-cat="meal">+ Tambah waktu makan</button>
+    <div class="tip">Disarankan makan porsi kecil 4–6x sehari, bukan 2–3x porsi besar. Setiap waktu makan otomatis dapat reminder susulan "jangan rebahan dulu" ±2 jam sesudahnya.</div>
+  </div>
+
+  <div class="card">
+    <div class="cat-header">
+      <div class="cat-title">💧 Minum Air Putih</div>
+      <label class="switch"><input type="checkbox" id="toggle-water"><span class="slider"></span></label>
+    </div>
+    <div class="interval-row">
+      Setiap
+      <select id="water-interval">
+        <option value="1">1 jam</option>
+        <option value="2">2 jam</option>
+        <option value="3">3 jam</option>
+      </select>
+      dari jam
+      <input type="time" id="water-start" value="08:00" style="width:90px">
+      sampai
+      <input type="time" id="water-end" value="20:00" style="width:90px">
+    </div>
+    <div class="tip">Hindari minum banyak sekaligus saat makan besar — sedikit tapi sering lebih baik untuk lambung. Batasi kopi & minuman bersoda.</div>
+  </div>
+
+  <div class="card">
+    <div class="cat-header">
+      <div class="cat-title">💊 Minum Obat Lambung</div>
+      <label class="switch"><input type="checkbox" id="toggle-meds"><span class="slider"></span></label>
+    </div>
+    <div id="meds-times"></div>
+    <button class="add-btn" data-cat="meds">+ Tambah waktu obat</button>
+    <div class="tip">Isi sesuai anjuran dokter/apoteker kamu — app ini cuma pengingat, bukan sumber dosis atau jadwal minum obat.</div>
+  </div>
+
+  <div class="card">
+    <div class="cat-header">
+      <div class="cat-title">🚶 Jangan Rebahan</div>
+      <label class="switch"><input type="checkbox" id="toggle-rest"><span class="slider"></span></label>
+    </div>
+    <div class="tip">Otomatis muncul ±2 jam setelah tiap jadwal makan yang aktif. Matikan di sini kalau nggak mau reminder ini.</div>
+  </div>
+
+</div>
+
+<div class="disclaimer">Bukan pengganti saran medis. Kalau gejala sering muncul atau makin berat, sebaiknya konsultasi ke dokter ya.</div>
+
+<script>
+const STORAGE_KEY = 'lambung-settings';
+const todayStr = () => new Date().toISOString().split('T')[0];
+
+const WORKER_URL = 'https://aslam-notify-push.erwinwahyura.workers.dev';
+const APP_TOKEN = '7riS01tYvIdCtEDjq5m_VYBdsTXQwBKS';
+const VAPID_PUBLIC_KEY = 'BMwPCFpib_gbxIHhcnh_3BITS4NLxPrDvQ1lPci1n31CMIkLUCniAfJMZLRpNL5QpwKbkV69qluHWdCVSRl_tfk';
+
+const DEFAULT_SETTINGS = {
+  mealEnabled: true,
+  mealTimes: ['07:00','10:00','12:30','15:30','18:30'],
+  waterEnabled: true,
+  waterInterval: 2,
+  waterStart: '08:00',
+  waterEnd: '20:00',
+  medsEnabled: false,
+  medsTimes: [],
+  restEnabled: true
+};
+
+let settings = structuredClone(DEFAULT_SETTINGS);
+let progress = {};
+
+function loadSettings(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(raw) settings = {...DEFAULT_SETTINGS, ...JSON.parse(raw)};
+  }catch(e){ /* first time, use defaults */ }
+}
+function saveSettings(){
+  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(settings)); }catch(e){ console.error(e); }
+  syncSettingsToServer();
+}
+function syncSettingsToServer(){
+  fetch(WORKER_URL + '/api/settings', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json', 'Authorization':'Bearer '+APP_TOKEN},
+    body: JSON.stringify(settings)
+  }).catch(e => console.error('Sync ke server gagal:', e));
+}
+function loadProgress(){
+  try{
+    const raw = localStorage.getItem('progress:'+todayStr());
+    progress = raw ? JSON.parse(raw) : {};
+  }catch(e){ progress = {}; }
+}
+function saveProgress(){
+  try{ localStorage.setItem('progress:'+todayStr(), JSON.stringify(progress)); }catch(e){ console.error(e); }
+}
+
+function addMinutes(hhmm, mins){
+  const [h,m] = hhmm.split(':').map(Number);
+  let total = h*60+m+mins;
+  total = ((total % 1440)+1440)%1440;
+  const nh = Math.floor(total/60).toString().padStart(2,'0');
+  const nm = (total%60).toString().padStart(2,'0');
+  return `${nh}:${nm}`;
+}
+
+function buildSchedule(){
+  const items = [];
+  if(settings.mealEnabled){
+    settings.mealTimes.forEach((t,i)=>{
+      items.push({id:'meal-'+i, time:t, label:'Waktu makan (porsi kecil)', cat:'meal', icon:'🍽️'});
+      if(settings.restEnabled){
+        items.push({id:'rest-'+i, time:addMinutes(t,120), label:'Jangan rebahan dulu ya', cat:'rest', icon:'🚶'});
+      }
+    });
+  }
+  if(settings.waterEnabled){
+    const [sh,sm] = settings.waterStart.split(':').map(Number);
+    const [eh,em] = settings.waterEnd.split(':').map(Number);
+    let cur = sh*60+sm;
+    const end = eh*60+em;
+    const step = settings.waterInterval*60;
+    let i=0;
+    while(cur<=end){
+      const h = Math.floor(cur/60).toString().padStart(2,'0');
+      const m = (cur%60).toString().padStart(2,'0');
+      items.push({id:'water-'+i, time:`${h}:${m}`, label:'Minum air putih', cat:'water', icon:'💧'});
+      cur+=step; i++;
+    }
+  }
+  if(settings.medsEnabled){
+    settings.medsTimes.forEach((t,i)=>{
+      items.push({id:'meds-'+i, time:t, label:'Minum obat lambung', cat:'meds', icon:'💊'});
+    });
+  }
+  items.sort((a,b)=> a.time.localeCompare(b.time));
+  return items;
+}
+
+function renderToday(){
+  const list = buildSchedule();
+  const container = document.getElementById('scheduleList');
+  const progressEl = document.getElementById('progressText');
+  if(list.length===0){
+    container.innerHTML = '<div class="empty">Belum ada reminder aktif.<br>Atur di tab "Atur Waktu" ya 👉</div>';
+    progressEl.textContent='';
+    return;
+  }
+  const doneCount = list.filter(i=>progress[i.id]).length;
+  progressEl.textContent = `${doneCount} dari ${list.length} selesai hari ini`;
+  container.innerHTML = list.map(item=>{
+    const done = !!progress[item.id];
+    return `<div class="reminder-item r-${item.cat} ${done?'done':''}">
+      <div class="r-icon">${item.icon}</div>
+      <div class="r-body">
+        <div class="r-time">${item.time}</div>
+        <div class="r-label">${item.label}</div>
+      </div>
+      <div class="r-check ${done?'checked':''}" data-id="${item.id}">${done?'✓':''}</div>
+    </div>`;
+  }).join('');
+  container.querySelectorAll('.r-check').forEach(el=>{
+    el.addEventListener('click', async ()=>{
+      const id = el.getAttribute('data-id');
+      progress[id] = !progress[id];
+      await saveProgress();
+      renderToday();
+    });
+  });
+}
+
+function renderMealTimes(){
+  const el = document.getElementById('meal-times');
+  el.innerHTML = settings.mealTimes.map((t,i)=>`
+    <div class="time-row">
+      <input type="time" value="${t}" data-cat="meal" data-idx="${i}">
+      <button class="del-btn" data-cat="meal" data-idx="${i}">✕</button>
+    </div>`).join('');
+  bindTimeRowEvents('meal');
+}
+function renderMedsTimes(){
+  const el = document.getElementById('meds-times');
+  if(settings.medsTimes.length===0){
+    el.innerHTML = '<div class="empty" style="padding:14px 4px;">Belum ada waktu obat</div>';
+  } else {
+    el.innerHTML = settings.medsTimes.map((t,i)=>`
+      <div class="time-row">
+        <input type="time" value="${t}" data-cat="meds" data-idx="${i}">
+        <button class="del-btn" data-cat="meds" data-idx="${i}">✕</button>
+      </div>`).join('');
+  }
+  bindTimeRowEvents('meds');
+}
+function bindTimeRowEvents(cat){
+  const key = cat+'Times';
+  document.querySelectorAll(`input[type=time][data-cat="${cat}"]`).forEach(inp=>{
+    inp.addEventListener('change', async ()=>{
+      const idx = +inp.getAttribute('data-idx');
+      settings[key][idx] = inp.value;
+      await saveSettings();
+      renderToday();
+    });
+  });
+  document.querySelectorAll(`.del-btn[data-cat="${cat}"]`).forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      const idx = +btn.getAttribute('data-idx');
+      settings[key].splice(idx,1);
+      await saveSettings();
+      if(cat==='meal') renderMealTimes(); else renderMedsTimes();
+      renderToday();
+    });
+  });
+}
+
+function renderSettingsForm(){
+  document.getElementById('toggle-meal').checked = settings.mealEnabled;
+  document.getElementById('toggle-water').checked = settings.waterEnabled;
+  document.getElementById('toggle-meds').checked = settings.medsEnabled;
+  document.getElementById('toggle-rest').checked = settings.restEnabled;
+  document.getElementById('water-interval').value = settings.waterInterval;
+  document.getElementById('water-start').value = settings.waterStart;
+  document.getElementById('water-end').value = settings.waterEnd;
+  renderMealTimes();
+  renderMedsTimes();
+}
+
+document.getElementById('toggle-meal').addEventListener('change', async e=>{ settings.mealEnabled=e.target.checked; await saveSettings(); renderToday(); });
+document.getElementById('toggle-water').addEventListener('change', async e=>{ settings.waterEnabled=e.target.checked; await saveSettings(); renderToday(); });
+document.getElementById('toggle-meds').addEventListener('change', async e=>{ settings.medsEnabled=e.target.checked; await saveSettings(); renderToday(); });
+document.getElementById('toggle-rest').addEventListener('change', async e=>{ settings.restEnabled=e.target.checked; await saveSettings(); renderToday(); });
+document.getElementById('water-interval').addEventListener('change', async e=>{ settings.waterInterval=+e.target.value; await saveSettings(); renderToday(); });
+document.getElementById('water-start').addEventListener('change', async e=>{ settings.waterStart=e.target.value; await saveSettings(); renderToday(); });
+document.getElementById('water-end').addEventListener('change', async e=>{ settings.waterEnd=e.target.value; await saveSettings(); renderToday(); });
+
+document.querySelectorAll('.add-btn').forEach(btn=>{
+  btn.addEventListener('click', async ()=>{
+    const cat = btn.getAttribute('data-cat');
+    const key = cat+'Times';
+    settings[key].push('12:00');
+    await saveSettings();
+    if(cat==='meal') renderMealTimes(); else renderMedsTimes();
+    renderToday();
+  });
+});
+
+document.querySelectorAll('.tab').forEach(tab=>{
+  tab.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById(tab.getAttribute('data-tab')).classList.add('active');
+  });
+});
+
+// Real background push: a Cloudflare Worker checks the schedule every minute
+// server-side and sends a Web Push notification, so this works even if the
+// app/tab is fully closed (unlike a page-side setInterval).
+function urlBase64ToUint8Array(base64String){
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g,'+').replace(/_/g,'/');
+  const raw = atob(base64);
+  return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
+}
+
+async function enablePushNotifications(){
+  if(!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+  const perm = await Notification.requestPermission();
+  if(perm !== 'granted') return;
+  const reg = await navigator.serviceWorker.ready;
+  let sub = await reg.pushManager.getSubscription();
+  if(!sub){
+    sub = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+    });
+  }
+  await fetch(WORKER_URL + '/api/subscribe', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json', 'Authorization':'Bearer '+APP_TOKEN},
+    body: JSON.stringify(sub)
+  });
+  syncSettingsToServer();
+  document.getElementById('notifBar').style.display = 'none';
+}
+
+if('Notification' in window && 'serviceWorker' in navigator && 'PushManager' in window){
+  const bar = document.getElementById('notifBar');
+  if(Notification.permission === 'granted'){
+    enablePushNotifications(); // re-confirm subscription is registered server-side
+  } else if(Notification.permission !== 'denied'){
+    bar.style.display = 'flex';
+  }
+  document.getElementById('notifBtn').addEventListener('click', enablePushNotifications);
+}
+
+(async function init(){
+  await loadSettings();
+  await loadProgress();
+  renderToday();
+  renderSettingsForm();
+})();
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('./sw.js').catch(err=>console.error('SW gagal:', err));
+  });
+}
+</script>
+
+</body>
+</html>
