@@ -1,4 +1,4 @@
-const CACHE = 'lambung-sehat-v2';
+const CACHE = 'lambung-sehat-v3';
 const ASSETS = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', (e) => {
@@ -16,7 +16,27 @@ self.addEventListener('activate', (e) => {
 });
 
 self.addEventListener('fetch', (e) => {
-  e.respondWith(caches.match(e.request).then((r) => r || fetch(e.request)));
+  e.respondWith(
+    caches.match(e.request).then((cached) => {
+      if (cached) return cached;
+      return fetch(e.request).then((response) => {
+        // Safari refuses to render a service-worker response for a
+        // navigation if it went through a redirect (response.redirected),
+        // so rebuild a clean, non-redirected Response before returning it.
+        if (response.redirected) {
+          return response.blob().then(
+            (body) =>
+              new Response(body, {
+                status: response.status,
+                statusText: response.statusText,
+                headers: response.headers
+              })
+          );
+        }
+        return response;
+      });
+    })
+  );
 });
 
 self.addEventListener('push', (e) => {
@@ -37,7 +57,7 @@ self.addEventListener('notificationclick', (e) => {
       for (const client of clients) {
         if ('focus' in client) return client.focus();
       }
-      if (self.clients.openWindow) return self.clients.openWindow('./index.html');
+      if (self.clients.openWindow) return self.clients.openWindow('./');
     })
   );
 });
