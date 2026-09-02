@@ -7,9 +7,10 @@ UI is in Indonesian.
 
 ## How it's built
 
-- **Frontend**: a single static page (`index.html`) + `manifest.json` +
-  `sw.js` (service worker). No build step, no framework — plain HTML/CSS/JS.
-  Schedule and daily checklist progress are stored in `localStorage`.
+- **Frontend** (`public/`): a single static page (`index.html`) +
+  `manifest.json` + `sw.js` (service worker). No build step, no framework —
+  plain HTML/CSS/JS. Schedule and daily checklist progress are stored in
+  `localStorage`.
 - **Backend** (`worker/`): a Cloudflare Worker that sends real **push
   notifications** on a schedule, so reminders arrive even when the app is
   fully closed. It runs on a cron trigger every minute, compares the current
@@ -22,20 +23,29 @@ config can fix. The worker is what makes it work in the background.
 
 ## Running the frontend
 
-It's fully static, so any static host works. Simplest option — GitHub Pages:
+It's fully static, so any static host works. It's deployed on **Cloudflare
+Pages** (project `aslam-notify`), served straight from `public/`:
 
-1. Repo Settings → Pages → Source: **Deploy from a branch** → `main` / `/ (root)`.
-2. Visit the published URL, then "Add to Home Screen" on your phone to
-   install it as an app.
+```bash
+npx wrangler pages deploy public --project-name=aslam-notify
+```
 
-For local testing: `python3 -m http.server 8123` from the repo root, then
-open `http://localhost:8123`.
+Run that after any change under `public/` to push a new version live. (This
+is a manual/direct-upload deploy, not auto-deploy-on-push — connecting the
+Pages project to Git for that requires a one-time GitHub authorization click
+in the Cloudflare dashboard: **Workers & Pages → Create → Pages → Connect to
+Git**.)
+
+For local testing: `python3 -m http.server 8123` from `public/`, then open
+`http://localhost:8123`.
 
 ## Deploying/updating the push backend
 
 The worker is already deployed at `https://aslam-notify-push.erwinwahyura.workers.dev`
-and wired into `index.html` (`WORKER_URL`, `APP_TOKEN`, `VAPID_PUBLIC_KEY`
-constants near the top of the `<script>`). You only need the steps below if
+and wired into `public/index.html` (`WORKER_URL`, `APP_TOKEN`,
+`VAPID_PUBLIC_KEY` constants near the top of the `<script>`). Pushing to
+`main` auto-redeploys it via `.github/workflows/deploy-worker.yml` (needs a
+`CLOUDFLARE_API_TOKEN` repo secret). You only need the manual steps below if
 you're redeploying from scratch or rotating keys.
 
 ```bash
@@ -50,13 +60,13 @@ npx wrangler deploy
 
 `VAPID_SERVER_PUBLIC_KEY` and `VAPID_SUBJECT` are plain (non-secret) vars
 already committed in `wrangler.toml`. If you regenerate the VAPID keypair,
-update `VAPID_PUBLIC_KEY` in `index.html` to match the new public key, and
-`VAPID_SERVER_PUBLIC_KEY` in `wrangler.toml` — client and server must use the
-same keypair or push subscriptions will fail.
+update `VAPID_PUBLIC_KEY` in `public/index.html` to match the new public key,
+and `VAPID_SERVER_PUBLIC_KEY` in `wrangler.toml` — client and server must use
+the same keypair or push subscriptions will fail.
 
 `APP_TOKEN` is a shared secret so only this app's frontend can write to your
 KV store (subscription + schedule) — it must match between the Worker secret
-and the `APP_TOKEN` constant in `index.html`.
+and the `APP_TOKEN` constant in `public/index.html`.
 
 ### How the worker decides what to send
 
